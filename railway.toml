@@ -1,0 +1,11 @@
+[build]
+builder = "NIXPACKS"
+
+# This file is for the BOT service (runs continuously).
+# Create a second Railway service for the SCHEDULER with:
+#   startCommand = "python agent.py --schedule"
+#   and a cron trigger: 0 8 * * *
+
+[deploy]
+startCommand = "python agent.py --bot"
+restartPolicyType = "ALWAYS"
