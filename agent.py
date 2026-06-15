@@ -166,10 +166,19 @@ def get_all_rows() -> list[dict]:
 
 
 def _text(props, key):
-    prop  = props.get(key, {})
-    t     = prop.get("type")
+    prop = props.get(key, {})
+    t    = prop.get("type")
+    # Handle email type (Notion stores as plain string under "email" key)
+    if t == "email":
+        return prop.get("email") or ""
     items = prop.get(t, []) if t in ("title", "rich_text") else []
     return "".join(i.get("plain_text", "") for i in items).strip()
+
+
+def _email(props, key):
+    """Dedicated helper for Notion email-type properties."""
+    prop = props.get(key, {})
+    return prop.get("email") or ""
 
 
 def _date(props, key):
@@ -183,9 +192,13 @@ def _date(props, key):
 
 def _select(props, key):
     prop = props.get(key, {})
+    t    = prop.get("type")
+    # Notion "status" type: {"type": "status", "status": {"name": "..."}}
+    # Notion "select" type: {"type": "select", "select": {"name": "..."}}
     for k in ("select", "status"):
-        if prop.get(k):
-            return prop[k].get("name", "")
+        inner = prop.get(k)
+        if inner and isinstance(inner, dict):
+            return inner.get("name", "")
     return ""
 
 
@@ -368,7 +381,7 @@ def identify_due(rows: list[dict]) -> list[dict]:
         props   = row.get("properties", {})
         company = _text(props, "Company")
         contact = _text(props, "Contact")
-        email   = _text(props, "Email")
+        email   = _email(props, "Email")
         status  = _select(props, "Status")
         notes   = _text(props, "Notes")
         trigger = _text(props, "Trigger")
